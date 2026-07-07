@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Menu, Sparkles, Loader2 } from "lucide-react";
+import { Menu, Sparkles, Loader2, Trash2, Calculator, FlaskConical, BookOpen } from "lucide-react";
 import { ChatSidebar } from "@/components/chat/Sidebar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { MessageInput } from "@/components/chat/MessageInput";
@@ -10,7 +10,7 @@ import { authStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
 import type { StructuredAnswer, AnswerBlock, RomanStatement, ImageStatusBlock, SourcesBlock, SubAnswerBlock, FinalAnswerBlock, HighlightChip } from "@/lib/chat-types";
 import type { AgentResponse, Confidence } from "@/server/lib/types";
-import { askQuestion } from "@/server/api/ask";
+import { askQuestion } from "@/api/ask";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -218,6 +218,7 @@ function ChatPage() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [suggestion, setSuggestion] = useState<{ text: string; nonce: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -231,6 +232,13 @@ function ChatPage() {
   }, []);
 
   const active = useMemo(() => chats.find((c) => c.id === activeId) ?? null, [chats, activeId]);
+
+  // Header title always reflects the selected subject when one is set — the chat's
+  // saved title (e.g. "Image" for an image-only first message) is sidebar-list-only
+  // and must never leak into the header.
+  const headerTitle = selectedSubject
+    ? `${selectedSubject} Problem Solving`
+    : (active?.title ?? "AI Doubt Solver");
 
   // Restore class/subject/chapter when switching chats
   useEffect(() => {
@@ -348,6 +356,17 @@ function ChatPage() {
     void send(option);
   };
 
+  // Welcome-screen suggestion card click → prefill the composer with a starter prompt
+  const handleSuggestionSelect = (text: string) => {
+    setSuggestion({ text, nonce: Date.now() });
+  };
+
+  const handleDeleteChat = () => {
+    if (!active) return;
+    chatStore.remove(active.id);
+    newChat();
+  };
+
   return (
     <div className="h-screen w-full flex bg-background overflow-hidden">
       {/* Sidebar — desktop */}
@@ -393,7 +412,7 @@ function ChatPage() {
 
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-border flex items-center px-3 md:px-6 gap-2 bg-background/80 backdrop-blur">
+        <header className="h-16 border-b border-border flex items-center px-3 md:px-6 gap-3 bg-background/80 backdrop-blur">
           <Button
             variant="ghost"
             size="icon"
@@ -402,20 +421,41 @@ function ChatPage() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="text-sm font-medium text-foreground truncate">
-            {active?.title ?? "New chat"}
+          <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center shrink-0">
+            <Sparkles className="h-4.5 w-4.5 text-primary" />
           </div>
-          {isSending && (
-            <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Thinking…
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-foreground truncate">
+              {headerTitle}
             </div>
-          )}
+            <div className="text-xs text-muted-foreground truncate">
+              Synced with the NeuroCrack app
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-3 shrink-0">
+            {isSending && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Thinking…
+              </div>
+            )}
+            {active && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                onClick={handleDeleteChat}
+                title="Delete chat"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </header>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {!active || active.messages.length === 0 ? (
-            <WelcomeScreen />
+            <WelcomeScreen onSuggestionSelect={handleSuggestionSelect} />
           ) : (
             <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
               {active.messages.map((m) => (
@@ -438,13 +478,39 @@ function ChatPage() {
           onClassChange={handleClassChange}
           onSubjectChange={handleSubjectChange}
           onChapterChange={handleChapterChange}
+          presetText={suggestion?.text}
+          presetKey={suggestion?.nonce}
         />
       </main>
     </div>
   );
 }
 
-function WelcomeScreen() {
+const WELCOME_SUGGESTIONS = [
+  {
+    label: "Solve a math problem",
+    prompt: "Help me solve this math problem: ",
+    icon: Calculator,
+    iconBg: "bg-violet-100",
+    iconColor: "text-violet-600",
+  },
+  {
+    label: "Explain a science concept",
+    prompt: "Can you explain this science concept: ",
+    icon: FlaskConical,
+    iconBg: "bg-sky-100",
+    iconColor: "text-sky-600",
+  },
+  {
+    label: "Understand a chapter",
+    prompt: "Help me understand this chapter: ",
+    icon: BookOpen,
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+  },
+] as const;
+
+function WelcomeScreen({ onSuggestionSelect }: { onSuggestionSelect: (text: string) => void }) {
   return (
     <div className="h-full flex flex-col items-center justify-center px-4 py-12">
       <div
@@ -453,12 +519,33 @@ function WelcomeScreen() {
       >
         <Sparkles className="h-7 w-7" />
       </div>
+      <div className="flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 mb-4">
+        <img src="/bytestone-icon.svg" alt="" className="h-3.5 w-auto" />
+        <span className="text-xs font-semibold text-accent-foreground">1 prompt = 1 ByteStone</span>
+      </div>
       <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight text-center">
         What doubt can I clear today?
       </h1>
       <p className="text-sm text-muted-foreground mt-2 text-center max-w-md">
         Select your class and subject below, then type your question to get clear, step-by-step answers.
       </p>
+
+      <div className="flex flex-nowrap items-stretch justify-center gap-3 mt-8 w-full max-w-3xl">
+        {WELCOME_SUGGESTIONS.map((s) => (
+          <button
+            key={s.label}
+            type="button"
+            onClick={() => onSuggestionSelect(s.prompt)}
+            className="flex flex-1 basis-0 min-w-0 items-center gap-3 rounded-2xl bg-card border border-border px-4 py-3.5 text-left hover:border-primary/30 transition-colors"
+            style={{ boxShadow: "var(--shadow-soft)" }}
+          >
+            <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0", s.iconBg)}>
+              <s.icon className={cn("h-4.5 w-4.5", s.iconColor)} />
+            </div>
+            <span className="text-sm font-medium text-foreground">{s.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

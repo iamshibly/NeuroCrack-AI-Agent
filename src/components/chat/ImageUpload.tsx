@@ -1,4 +1,4 @@
-import { ImageIcon } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -55,10 +55,10 @@ export function ImageUploadButton({ onImageSelect, onError, disabled }: Props) {
         size="icon"
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
-        className="h-8 w-8 rounded-xl shrink-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+        className="h-9 w-9 rounded-xl shrink-0 text-muted-foreground hover:text-foreground hover:bg-accent"
         title="Attach image (JPEG, PNG, WebP, GIF — max 4 MB)"
       >
-        <ImageIcon className="h-4 w-4" />
+        <Paperclip className="h-5 w-5" />
       </Button>
     </>
   );

@@ -14,6 +14,8 @@ type Props = {
   onClassChange: (cls: string) => void;
   onSubjectChange: (subject: string) => void;
   onChapterChange: (chapter: string) => void;
+  presetText?: string;
+  presetKey?: number;
 };
 
 function formatBytes(bytes: number): string {
@@ -31,6 +33,8 @@ export function MessageInput({
   onClassChange,
   onSubjectChange,
   onChapterChange,
+  presetText,
+  presetKey,
 }: Props) {
   const [value, setValue] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -47,6 +51,13 @@ export function MessageInput({
     setPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [image]);
+
+  // Welcome-screen suggestion card selected — prefill the composer and focus it
+  useEffect(() => {
+    if (presetKey === undefined) return;
+    setValue(presetText ?? "");
+    ref.current?.focus();
+  }, [presetKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chapterRequired = requiresChapter(selectedClass, selectedSubject);
   const chapterReady = !chapterRequired || !!selectedChapter;
@@ -202,8 +213,9 @@ export function MessageInput({
         </div>
       )}
 
-      <p className="text-center text-xs text-muted-foreground mt-2">
-        NeuroCrack may produce inaccurate information. Always verify important answers.
+      <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground mt-2">
+        <img src="/bytestone-icon.svg" alt="" className="h-3 w-auto shrink-0" />
+        1 ByteStone per prompt · Always verify important answers
       </p>
     </div>
   );

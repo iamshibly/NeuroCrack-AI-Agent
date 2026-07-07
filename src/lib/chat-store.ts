@@ -89,6 +89,9 @@ export const chatStore = {
   remove(id: string) {
     write(read().filter((c) => c.id !== id));
   },
+  clear() {
+    write([]);
+  },
   subscribe(cb: () => void): () => void {
     if (typeof window === "undefined") return () => {};
     const handler = () => cb();

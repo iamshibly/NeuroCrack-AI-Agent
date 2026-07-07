@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { MessageSquarePlus, MessageSquare, Trash2, LogOut, Sparkles, Settings, X } from "lucide-react";
+import { MessageSquarePlus, MessageSquare, Trash2, LogOut, Settings, X, History } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { chatStore, type Chat } from "@/lib/chat-store";
 import { authStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+// No credits backend yet — placeholder balance until wired up to a real account.
+const BYTESTONES_BALANCE = 4;
 
 type Props = {
   activeChatId: string | null;
@@ -31,18 +34,17 @@ export function ChatSidebar({ activeChatId, onSelect, onNewChat, onClose }: Prop
     navigate({ to: "/login" });
   };
 
+  const handleClearAll = () => {
+    chatStore.clear();
+    onNewChat();
+  };
+
   return (
     <aside className="h-full w-full flex flex-col bg-sidebar border-r border-sidebar-border">
       {/* Header */}
-      <div className="p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 px-2">
-          <div
-            className="h-8 w-8 rounded-xl flex items-center justify-center text-primary-foreground"
-            style={{ background: "var(--gradient-primary)" }}
-          >
-            <Sparkles className="h-4 w-4" />
-          </div>
-          <span className="font-semibold tracking-tight text-sidebar-foreground">NeuroCrack</span>
+      <div className="p-4 pb-5 flex items-center justify-between">
+        <div className="flex items-center px-2">
+          <img src="/neurocrack-logo.svg" alt="NeuroCrack" className="h-8 w-auto" />
         </div>
         {onClose && (
           <Button variant="ghost" size="icon" className="md:hidden h-8 w-8" onClick={onClose}>
@@ -51,10 +53,10 @@ export function ChatSidebar({ activeChatId, onSelect, onNewChat, onClose }: Prop
         )}
       </div>
 
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-2">
         <Button
           onClick={onNewChat}
-          className="w-full h-11 rounded-xl justify-start gap-2 text-primary-foreground font-medium"
+          className="w-full h-11 rounded-full justify-center gap-2 text-primary-foreground font-medium"
           style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-soft)" }}
         >
           <MessageSquarePlus className="h-4 w-4" />
@@ -62,9 +64,30 @@ export function ChatSidebar({ activeChatId, onSelect, onNewChat, onClose }: Prop
         </Button>
       </div>
 
+      <div className="px-3 pb-3">
+        <div className="w-full h-10 rounded-full bg-accent flex items-center justify-between px-3.5">
+          <div className="flex items-center gap-2">
+            <img src="/bytestone-icon.svg" alt="" className="h-4 w-auto" />
+            <span className="text-sm font-medium text-accent-foreground">ByteStones</span>
+          </div>
+          <span className="text-sm font-semibold text-accent-foreground">{BYTESTONES_BALANCE}</span>
+        </div>
+      </div>
+
       {/* Chats */}
-      <div className="px-3 pb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Recent
+      <div className="px-3 pb-2 flex items-center justify-between">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Recent
+        </span>
+        {chats.length > 0 && (
+          <button
+            onClick={handleClearAll}
+            className="flex items-center gap-1 text-xs font-medium text-destructive hover:underline"
+          >
+            <History className="h-3 w-3" />
+            Clear all
+          </button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {chats.length === 0 ? (

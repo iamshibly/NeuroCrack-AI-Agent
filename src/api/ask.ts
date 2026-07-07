@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { ZodError } from "zod";
-import { askRequestSchema } from "../lib/validators";
-import { runAgent } from "../lib/agent";
-import { serverConfig } from "../config";
-import { logError } from "../lib/logger";
-import type { AgentResponse } from "../lib/types";
+import { askRequestSchema } from "../server/lib/validators";
+import { runAgent } from "../server/lib/agent";
+import { serverConfig } from "../server/config";
+import { logError } from "../server/lib/logger";
+import type { AgentResponse } from "../server/lib/types";
 
 export const askQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => askRequestSchema.parse(data))

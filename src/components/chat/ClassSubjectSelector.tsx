@@ -1,3 +1,4 @@
+import { Lock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,10 @@ import {
   getChapterOptions,
   requiresChapter,
 } from "@/lib/classSubjectOptions";
+import { cn } from "@/lib/utils";
+
+const PILL_TRIGGER =
+  "h-8 gap-1.5 text-xs font-medium rounded-full border-border bg-secondary/70 w-auto min-w-[120px] max-w-[220px] hover:bg-secondary transition-colors";
 
 type Props = {
   selectedClass: string | null;
@@ -48,7 +53,8 @@ export function ClassSubjectSelector({
           onChapterChange("");
         }}
       >
-        <SelectTrigger className="h-8 text-xs rounded-xl border-border bg-secondary/60 w-auto min-w-[120px] max-w-[200px] hover:bg-secondary transition-colors">
+        <SelectTrigger className={PILL_TRIGGER}>
+          <Lock className="h-3 w-3 shrink-0 opacity-60" />
           <SelectValue placeholder="Select class" />
         </SelectTrigger>
         <SelectContent>
@@ -68,7 +74,7 @@ export function ClassSubjectSelector({
         }}
         disabled={!selectedClass}
       >
-        <SelectTrigger className="h-8 text-xs rounded-xl border-border bg-secondary/60 w-auto min-w-[120px] max-w-[200px] hover:bg-secondary transition-colors disabled:opacity-40">
+        <SelectTrigger className={cn(PILL_TRIGGER, "disabled:opacity-40")}>
           <SelectValue placeholder="Select subject" />
         </SelectTrigger>
         <SelectContent>
@@ -85,7 +91,7 @@ export function ClassSubjectSelector({
           value={selectedChapter ?? ""}
           onValueChange={onChapterChange}
         >
-          <SelectTrigger className="h-8 text-xs rounded-xl border-border bg-secondary/60 w-auto min-w-[140px] max-w-[260px] hover:bg-secondary transition-colors">
+          <SelectTrigger className={cn(PILL_TRIGGER, "min-w-[140px] max-w-[260px]")}>
             <SelectValue placeholder="Select chapter" />
           </SelectTrigger>
           <SelectContent>
